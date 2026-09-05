@@ -17,21 +17,42 @@ concurrency:
 jobs:
   tests:
     name: Test
-    uses: swiftlang/github-workflows/.github/workflows/swift_package_test.yml@0.0.14
+    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
     with:
+      # A fork's default branch does not carry the change, so the ref is named.
+      # A released version needs neither input.
+      workflows_repository: rnro/github-workflows
+      workflows_ref: unification
+      # Two calls in one workflow share a concurrency group unless each names
+      # itself, and would otherwise cancel each other.
+      name: tests
       enable_cross_pr_testing: true
-      linux_exclude_swift_versions: "[{\"swift_version\": \"5.9\"}, {\"swift_version\": \"5.10\"}]"
-      windows_exclude_swift_versions: "[{\"swift_version\": \"5.9\"}]"
+      # The old default list began at 5.9 and the excludes removed 5.9 and 5.10,
+      # leaving 6.0 upward; the new defaults begin at 6.1. 6.0 is named so that
+      # migrating does not quietly raise what this package is tested against —
+      # the manifest's tools version is 6.0, and narrowing that is a decision for
+      # this repository rather than a side effect of changing CI.
+      linux_swift_versions: '["6.0", "6.1", "6.2", "6.3", "nightly-release", "nightly-main"]'
+      windows_swift_versions: '["6.0", "6.1", "6.2", "6.3", "nightly-release", "nightly-main"]'
+      # Swift 6.0 cannot build the ucrt module against the Windows SDK on the
+      # runner image. A container carries one matched to its toolchain, so keeping
+      # 6.0 in the matrix means keeping the container the old workflow used.
+      windows_use_docker: true
   cmake-smoke-test:
     name: cmake-smoke-test
-    uses: swiftlang/github-workflows/.github/workflows/swift_package_test.yml@0.0.14
+    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
     with:
+      # A fork's default branch does not carry the change, so the ref is named.
+      # A released version needs neither input.
+      workflows_repository: rnro/github-workflows
+      workflows_ref: unification
+      name: cmake-smoke-test
       linux_os_versions: '["noble"]'
       linux_pre_build_command: INSTALL_CMAKE=1 ./.github/scripts/prebuild.sh
       linux_build_command: './.github/scripts/cmake-smoke-test.sh -DCMAKE_C_COMPILER=`which clang` -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_Swift_COMPILER=`which swiftc`'
       linux_swift_versions: '["nightly-main"]'
-      enable_macos_checks: true
-      macos_xcode_versions: '["swift_6.3"]'
+      enable_macos: true
+      macos_swift_versions: '["6.3"]'
       macos_pre_build_command: INSTALL_CMAKE=1 ./.github/scripts/prebuild.sh
       macos_build_command: 'export PATH=$PATH:$RUNNER_TOOL_CACHE && ./.github/scripts/cmake-smoke-test.sh -DCMAKE_C_COMPILER=`which clang` -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_Swift_COMPILER=`which swiftc`'
       windows_pre_build_command: 'Invoke-Program .\.github\scripts\prebuild.ps1 -InstallCMake'

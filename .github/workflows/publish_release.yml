@@ -104,15 +104,31 @@ jobs:
           echo "release_commit_patch=${RELEASE_COMMIT_PATCH}" >> "$GITHUB_OUTPUT"
   test:
     name: Test in ${{ matrix.release && 'Release' || 'Debug' }} configuration
-    uses: swiftlang/github-workflows/.github/workflows/swift_package_test.yml@0.0.14
+    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
     needs: create_release_commits
     strategy:
       fail-fast: false
       matrix:
         release: [true, false]
     with:
-      linux_exclude_swift_versions: "[{\"swift_version\": \"5.9\"}, {\"swift_version\": \"5.10\"}]"
-      windows_exclude_swift_versions: "[{\"swift_version\": \"5.9\"}]"
+      # A fork's default branch does not carry the change, so the ref is named.
+      # A released version needs neither input.
+      workflows_repository: rnro/github-workflows
+      workflows_ref: unification
+      # Each leg of the matrix names itself, or the two share a concurrency group
+      # and cancel each other.
+      name: test-release-${{ matrix.release }}
+      # The old default list began at 5.9 and the excludes removed 5.9 and 5.10,
+      # leaving 6.0 upward; the new defaults begin at 6.1. 6.0 is named so that
+      # migrating does not quietly raise what this package is tested against —
+      # the manifest's tools version is 6.0, and narrowing that is a decision for
+      # this repository rather than a side effect of changing CI.
+      linux_swift_versions: '["6.0", "6.1", "6.2", "6.3", "nightly-release", "nightly-main"]'
+      windows_swift_versions: '["6.0", "6.1", "6.2", "6.3", "nightly-release", "nightly-main"]'
+      # Swift 6.0 cannot build the ucrt module against the Windows SDK on the
+      # runner image. A container carries one matched to its toolchain, so keeping
+      # 6.0 in the matrix means keeping the container the old workflow used.
+      windows_use_docker: true
       linux_pre_build_command: |
         git config --global --add safe.directory "$(realpath .)"
         git config --local user.name 'swift-ci'
