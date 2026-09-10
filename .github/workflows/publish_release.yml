@@ -104,17 +104,13 @@ jobs:
           echo "release_commit_patch=${RELEASE_COMMIT_PATCH}" >> "$GITHUB_OUTPUT"
   test:
     name: Test in ${{ matrix.release && 'Release' || 'Debug' }} configuration
-    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
+    uses: swiftlang/github-workflows/.github/workflows/package_test.yml@0.0.16
     needs: create_release_commits
     strategy:
       fail-fast: false
       matrix:
         release: [true, false]
     with:
-      # A fork's default branch does not carry the change, so the ref is named.
-      # A released version needs neither input.
-      workflows_repository: rnro/github-workflows
-      workflows_ref: unification
       # Each leg of the matrix names itself, or the two share a concurrency group
       # and cancel each other.
       name: test-release-${{ matrix.release }}
