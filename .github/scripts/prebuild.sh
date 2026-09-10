@@ -13,6 +13,16 @@
 
 set -e
 
+# Package installs need root. A container runs as root with no sudo installed;
+# a runner is unprivileged with sudo available.
+as_root() {
+    if [[ "$(id -u)" -eq 0 ]] ; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
 if [[ $(uname) == Darwin ]] ; then
     if [[ "$INSTALL_CMAKE" == "1" ]] ; then
         mkdir -p "$RUNNER_TOOL_CACHE"
@@ -35,23 +45,23 @@ if [[ $(uname) == Darwin ]] ; then
 elif command -v apt-get >/dev/null 2>&1 ; then # bookworm, noble, jammy
     export DEBIAN_FRONTEND=noninteractive
 
-    apt-get update -y
+    as_root apt-get update -y
 
     # Debug symbols
-    apt-get install -y libc6-dbg
+    as_root apt-get install -y libc6-dbg
 
     if [[ "$INSTALL_CMAKE" == "1" ]] ; then
-        apt-get install -y cmake ninja-build
+        as_root apt-get install -y cmake ninja-build
     fi
 elif command -v dnf >/dev/null 2>&1 ; then # rhel-ubi9
-    dnf update -y
+    as_root dnf update -y
 
     # Debug symbols
-    dnf debuginfo-install -y glibc
+    as_root dnf debuginfo-install -y glibc
 elif command -v yum >/dev/null 2>&1 ; then # amazonlinux2
-    yum update -y
+    as_root yum update -y
 
     # Debug symbols
-    yum install -y yum-utils
-    debuginfo-install -y glibc
+    as_root yum install -y yum-utils
+    as_root debuginfo-install -y glibc
 fi
