@@ -129,12 +129,12 @@ jobs:
       # runner image. A container carries one matched to its toolchain, so keeping
       # 6.0 in the matrix means keeping the container the old workflow used.
       windows_use_docker: true
-      linux_pre_build_command: |
+      linux_setup_command: |
         git config --global --add safe.directory "$(realpath .)"
         git config --local user.name 'swift-ci'
         git config --local user.email 'swift-ci@users.noreply.github.com'
         echo "${{ needs.create_release_commits.outputs.release_commit_patch }}" | base64 -d | git am
-      windows_pre_build_command: |
+      windows_setup_command: |
         git config --local user.name "swift-ci"
         git config --local user.email "swift-ci@users.noreply.github.com"
         $patchBytes = [System.Convert]::FromBase64String("${{ needs.create_release_commits.outputs.release_commit_patch }}")
@@ -143,8 +143,8 @@ jobs:
         # fatal: empty ident name (for <>) not allowed
         cmd /c "type $env:TEMP\patch.diff | git am || (exit /b 1)"
       # We require that releases of swift-format build without warnings
-      linux_build_command: swift test -Xswiftc -warnings-as-errors ${{ matrix.release && '-c release' || '' }}
-      windows_build_command: Invoke-Program swift test -Xswiftc -warnings-as-errors ${{ matrix.release && '-c release' || '' }}
+      linux_command: swift test -Xswiftc -warnings-as-errors ${{ matrix.release && '-c release' || '' }}
+      windows_command: Invoke-Program swift test -Xswiftc -warnings-as-errors ${{ matrix.release && '-c release' || '' }}
   create_tag:
     name: Create Tag
     runs-on: ubuntu-latest
