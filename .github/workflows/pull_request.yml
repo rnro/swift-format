@@ -17,8 +17,12 @@ concurrency:
 jobs:
   tests:
     name: Test
-    uses: swiftlang/github-workflows/.github/workflows/package_test.yml@0.0.16
+    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
     with:
+      # A fork's default branch does not carry the change, so the ref is named.
+      # A released version needs neither input.
+      workflows_repository: rnro/github-workflows
+      workflows_ref: unification
       # Two calls in one workflow share a concurrency group unless each names
       # itself, and would otherwise cancel each other.
       name: tests
@@ -36,8 +40,12 @@ jobs:
       windows_use_docker: true
   cmake-smoke-test:
     name: cmake-smoke-test
-    uses: swiftlang/github-workflows/.github/workflows/package_test.yml@0.0.16
+    uses: rnro/github-workflows/.github/workflows/package_test.yml@unification
     with:
+      # A fork's default branch does not carry the change, so the ref is named.
+      # A released version needs neither input.
+      workflows_repository: rnro/github-workflows
+      workflows_ref: unification
       name: cmake-smoke-test
       linux_setup_command: INSTALL_CMAKE=1 ./.github/scripts/prebuild.sh
       linux_command: './.github/scripts/cmake-smoke-test.sh -DCMAKE_C_COMPILER=`which clang` -DCMAKE_CXX_COMPILER=`which clang++` -DCMAKE_Swift_COMPILER=`which swiftc`'
